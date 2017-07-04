@@ -17,9 +17,17 @@ import java.util.regex.Pattern;
 
 public class DirectoryValidatorTest {
 
-    private final static List<String> list = new ArrayList<String>(){{
+    private final static List<String> list = new ArrayList<String>() {{
+        // 修正
         add("[Love Hina][04][BDRIP][1440x1080][H264(vfr+ED_60fps)_FLAC][REV][AFA8371A].ass");
         add("[Love Hina][04][BDRIP][1440x1080][H264(vfr+ED_60fps)_FLAC][REV][AFA8371A].mkv");
+        //
+        add("[CASO][Suzumiya_Haruhi_no_Yuuutsu][25][V2][BDRIP][1920x1080][x264_FLAC_2][5E770389].TC.ass");
+        add("[CASO][Suzumiya_Haruhi_no_Yuuutsu][25][V2][BDRIP][1920x1080][x264_FLAC_2][5E770389].SC.ass");
+        add("[CASO][Suzumiya_Haruhi_no_Yuuutsu][25][V2][BDRIP][1920x1080][x264_FLAC_2][5E770389].mkv");
+        //
+        add("[Claymore][13][BDRIP][1080P][H264(vfr+ED60fps)_FLAC][REV].mkv");
+        add("[Claymore][16][BDRIP][1080P][H264(vfr+ED60fps)_FLAC][REV].mkv");
     }};
 
 
@@ -47,7 +55,8 @@ public class DirectoryValidatorTest {
                 if (!file.isDirectory()) {
                     throw new RuntimeException(infoPrefix + "必须为目录, " + fileName);
                 }
-                if (!Pattern.matches("^.*[(].+?[^\\s][／][^\\s].+?[)]$", fileName)) {
+                // "^.+?[(].+?[^\\s][／][a-zA-Z0-9 ;!&\\-.%]+[)]$"
+                if (!Pattern.matches("^.+?[(].+?[^\\s][／].+?[)]$", fileName)) {
                     throw new RuntimeException(infoPrefix + "文件夹名称格式错误, " + fileName);
                 }
             } else if (level.get() == 2) {
@@ -69,8 +78,12 @@ public class DirectoryValidatorTest {
                         List<List<URI>> trackers = torrent.getAnnounceList();
                         for (List<URI> item : trackers) {
                             for (URI uri : item) {
+                                if (null == uri.getHost()) { // uri中发布者写了非法字符导致乱码时，getHost()返回null
+                                    continue;
+                                }
                                 if (!uri.getHost().contains("tracker.dmhy.org")) {
                                     u2 = false;
+                                    break;
                                 }
                             }
                         }
@@ -106,31 +119,31 @@ public class DirectoryValidatorTest {
                         diskFileMap.remove(key);
                     }
                     // 种子指明之外的文件只能是字幕文件，且必须对应上视频文件，种子文件排除)
-                    for(Map.Entry<String, File> diskEntry : diskFileMap.entrySet()){
+                    for (Map.Entry<String, File> diskEntry : diskFileMap.entrySet()) {
                         boolean matched = false;
                         String diskEntryFileName = diskEntry.getValue().getName();
-                        if(list.contains(diskEntryFileName)){
+                        if (list.contains(diskEntryFileName)) {
                             System.out.println("配置保留文件: " + diskEntryFileName);
                             continue;
                         }
                         // 排除本省的torrent文件
-                        if(diskEntry.getKey().endsWith(".torrent")){
+                        if (diskEntry.getKey().endsWith(".torrent")) {
                             continue;
                         }
-                        if(!diskEntry.getKey().matches("^.+?\\.(ass|ssa|idx|sub)$")){
+                        if (!diskEntry.getKey().matches("^.+?\\.(ass|ssa|idx|sub)$")) {
                             throw new RuntimeException(String.format("除种子文件中指明的文件外必须以ass,ssa,idx,sub其中之一结尾, 文件路径%s", diskEntry.getKey()));
                         }
-                        for(Map.Entry<String, File> torrentEntry : torrentFileMap.entrySet()){
-                            if(!torrentEntry.getKey().matches("^.+?\\.(mkv|mp4|avi|wmv|MKV|MP4|AVI|WAV)$")){
+                        for (Map.Entry<String, File> torrentEntry : torrentFileMap.entrySet()) {
+                            if (!torrentEntry.getKey().matches("^.+?\\.(mkv|mp4|avi|wmv|MKV|MP4|AVI|WAV)$")) {
                                 continue;
                             }
                             String prefix = torrentEntry.getKey().replaceAll("\\.(mkv|mp4|avi|wmv|MKV|MP4|AVI|WMV)$", "");
-                            if(diskEntry.getKey().startsWith(prefix)){
+                            if (diskEntry.getKey().startsWith(prefix)) {
                                 matched = true;
                                 break;
                             }
                         }
-                        if(!matched){
+                        if (!matched) {
                             throw new RuntimeException(String.format("字幕文件未对应上视频文件, 文件路径%s", diskEntry.getKey()));
                         }
                     }
@@ -153,7 +166,7 @@ public class DirectoryValidatorTest {
     }
 
 
-    private Map<String, File> transferIdFileMap(Collection<File> fileCollection) throws Exception{
+    private Map<String, File> transferIdFileMap(Collection<File> fileCollection) throws Exception {
         Iterator<File> iterator = fileCollection.iterator();
         Map<String, File> result = new HashMap<String, File>();
         while (iterator.hasNext()) {
