@@ -33,11 +33,21 @@ public class HardLinkTest {
         if(!hardlinkRootFile.mkdir()){
             throw new RuntimeException("hardlinkRoot can not be created");
         }
-        list(new File(root), new AtomicInteger(0));
+        list(new File(root), new AtomicInteger(0), 2);
 
     }
 
-    private void list(File source, AtomicInteger level) throws Exception {
+    /**
+     * 将该levelTo的目录保持文件夹结构硬链接到指定目录（hardlinkRoot）
+     * 0（含）-levelTo（含）必须全是目录
+     *
+     * @param source
+     * @param level 0代表root目录
+     * @param levelTo 需要处理的目标level
+     *
+     * @throws Exception
+     */
+    private void list(File source, AtomicInteger level, int levelTo) throws Exception {
         if (null == source) {
             throw new RuntimeException("目录不能为空, " + source);
         }
@@ -46,9 +56,9 @@ public class HardLinkTest {
             if (!file.isDirectory()) {
                 throw new RuntimeException("must be directory, " + level);
             }
-            if (level.get() == 1) {
-                list(file, level);
-            } else if (level.get() == 2) {
+            if (level.get() < levelTo) {
+                list(file, level, levelTo);
+            } else if (level.get() == levelTo) {
                 Collection<File> toHardLinkFiles = FileUtils.listFiles(file, null, true);
                 Iterator<File> iterator = toHardLinkFiles.iterator();
                 while (iterator.hasNext()) {
