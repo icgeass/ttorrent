@@ -43,13 +43,21 @@ public class DirectoryValidatorTest {
         if (null == source) {
             throw new RuntimeException("目录不能为空, " + source);
         }
+        String infoPrefix = "level-" + level.get() + ": ";
         if (!source.isDirectory()) {
+            if(level.get() == 0){
+                throw new RuntimeException(infoPrefix + "根必须为目录, " + source.getName());
+            }
             return;
         }
         level.addAndGet(1);
-        String infoPrefix = "level-" + level.get() + ": ";
         Integer torrentCountLevel3 = 0;
-        for (File file : source.listFiles()) {
+        // if no sub files, throw ex
+        File[] subFiles = source.listFiles();
+        if(null == subFiles || subFiles.length == 0){
+            throw new RuntimeException(infoPrefix + "空文件夹, " + source.getName());
+        }
+        for (File file : subFiles) {
             String fileName = file.getName();
             if (level.get() == 1) {
                 if (!file.isDirectory()) {
