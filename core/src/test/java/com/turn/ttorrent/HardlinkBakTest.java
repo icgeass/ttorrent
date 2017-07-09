@@ -13,19 +13,25 @@ import java.util.Iterator;
  */
 public class HardlinkBakTest {
 
-    final String sourceDirectory = "E:\\0";
+    final String sourceDirectory = "D:\\sync";
 
-    final String targetDirectory = "E:\\.hardlink.bak";
+    final String targetDirectory = "D:\\.hardlink.bak";
 
     @Test
     public void hardlinkBak() throws Exception {
         String sourcePath = new File(sourceDirectory).getCanonicalPath();
         String targetPath =  new File(targetDirectory).getCanonicalPath();
+        File targetFile = new File(targetPath);
+        int suffix = 0;
+        while(!targetFile.mkdir()){
+            targetFile = new File(targetPath + "." + suffix);
+            suffix++;
+        }
         Collection<File> files = FileUtils.listFiles(new File(sourcePath), null, true);
         Iterator<File> iterator = files.iterator();
         while (iterator.hasNext()) {
             File f = iterator.next();
-            String targetLinkPath = targetPath + File.separator + f.getCanonicalPath().replace(":", "");
+            String targetLinkPath = targetFile.getCanonicalPath() + File.separator + f.getCanonicalPath().replace(":", "");
             File targetLinkFile = new File(targetLinkPath);
             //
             FileUtils.forceMkdirParent(targetLinkFile);
