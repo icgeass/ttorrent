@@ -30,11 +30,20 @@ public class DirectoryValidatorTest {
         add("[Claymore][16][BDRIP][1080P][H264(vfr+ED60fps)_FLAC][REV].mkv");
     }};
 
+    final String rootPath = "O:";
+
 
     @Test
     public void directoryValidateTest() throws Exception {
-        String root = "E:\\0";
-        listAndValidate(new File(root), new AtomicInteger(0));
+        if (null == rootPath || rootPath.trim().length() == 0) {
+            throw new RuntimeException("rootPath不能为空");
+        }
+        File rootPathFile = new File(rootPath.toUpperCase());
+        String reg = "[A-Z]:\\\\";
+        if (!Pattern.matches(reg, rootPathFile.getCanonicalPath())) {
+            throw new RuntimeException("根目录规范化路径应满足正则，'" + reg + "'");
+        }
+        listAndValidate(rootPathFile, new AtomicInteger(0));
 
     }
 
@@ -45,20 +54,32 @@ public class DirectoryValidatorTest {
         }
         String infoPrefix = "level-" + level.get() + ": ";
         if (!source.isDirectory()) {
-            if(level.get() == 0){
+            if (level.get() == 0) {
                 throw new RuntimeException(infoPrefix + "根必须为目录, " + source.getName());
             }
             return;
         }
+
         level.addAndGet(1);
         Integer torrentCountLevel3 = 0;
         // if no sub files, throw ex
         File[] subFiles = source.listFiles();
-        if(null == subFiles || subFiles.length == 0){
+        if (null == subFiles || subFiles.length == 0) {
             throw new RuntimeException(infoPrefix + "空文件夹, " + source.getName());
         }
         for (File file : subFiles) {
             String fileName = file.getName();
+            if (level.get() == 1) {
+                List<String> ignoreUnderRootList = new ArrayList<String>() {{
+                    add("$RECYCLE.BIN");
+                    add("System Volume Information");
+                    add("Recovery");
+                    add(".hardlink.bak");
+                }};
+                if (ignoreUnderRootList.contains(fileName)) {
+                    continue;
+                }
+            }
             if (level.get() == 1) {
                 if (!file.isDirectory()) {
                     throw new RuntimeException(infoPrefix + "必须为目录, " + fileName);
