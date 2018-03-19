@@ -24,12 +24,16 @@ public class HardLinkToSeedStructure {
 
     public static void createHardLink(String rootPath) throws Exception {
         System.out.println("==========================生成Seed目录开始==========================");
+        sizeOfAll.set(0L);
+        numOfAll.set(0L);
+
         String rootFileCanonicalPath = DirectoryValidator.validateRootPath(rootPath);
-        File rootFile = new File(rootFileCanonicalPath);
-        if (!rootFile.exists()) {
-            rootFile.mkdir();
+
+        File seedFolderCanonicalPath = new File(rootFileCanonicalPath + hardlinkToFolder);
+        if (!seedFolderCanonicalPath.exists()) {
+            seedFolderCanonicalPath.mkdir();
         }
-        Runtime.getRuntime().exec("attrib +R +S +H \"" + rootFileCanonicalPath + hardlinkToFolder + "\"");
+        Runtime.getRuntime().exec("attrib +R +S +H \"" + seedFolderCanonicalPath.getCanonicalPath() + "\"");
 
         list(rootFileCanonicalPath, new File(rootPath), new AtomicInteger(0), 2);
         System.out.println("文件总计：" + numOfAll.get() + "，文件大小：" + sizeOfAll.get());
@@ -71,12 +75,6 @@ public class HardLinkToSeedStructure {
                     File toHardLinkFile = iterator.next();
                     String targetLinkPath = rootFileCanonicalPath + hardlinkToFolder + File.separator + toHardLinkFile.getCanonicalPath().replace(file.getParentFile().getCanonicalPath() + File.separator, "");
                     File targetLinkFile = new File(targetLinkPath);
-                    if (null == sizeOfAll.get()) {
-                        sizeOfAll.set(0L);
-                    }
-                    if (null == numOfAll.get()) {
-                        numOfAll.set(0L);
-                    }
                     sizeOfAll.set(sizeOfAll.get() + toHardLinkFile.length());
                     numOfAll.set(numOfAll.get() + 1);
                     if (!targetLinkFile.exists()) {
