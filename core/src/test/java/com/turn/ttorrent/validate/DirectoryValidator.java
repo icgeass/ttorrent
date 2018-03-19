@@ -1,8 +1,7 @@
-package com.turn.ttorrent;
+package com.turn.ttorrent.validate;
 
 import com.turn.ttorrent.common.Torrent;
 import org.apache.commons.io.FileUtils;
-import org.testng.annotations.Test;
 
 import java.io.File;
 import java.lang.reflect.Field;
@@ -15,7 +14,7 @@ import java.util.regex.Pattern;
  * Created by yuuki asuna on 2017/7/1.
  */
 
-public class DirectoryValidatorTest {
+public class DirectoryValidator {
 
     private final static List<String> list = new ArrayList<String>() {{
         // 修正
@@ -30,25 +29,19 @@ public class DirectoryValidatorTest {
         add("[Claymore][16][BDRIP][1080P][H264(vfr+ED60fps)_FLAC][REV].mkv");
     }};
 
-    final String rootPath = "O:";
-
-
-    @Test
-    public void directoryValidateTest() throws Exception {
-        if (null == rootPath || rootPath.trim().length() == 0) {
-            throw new RuntimeException("rootPath不能为空");
-        }
-        File rootPathFile = new File(rootPath.toUpperCase());
-        String reg = "[A-Z]:\\\\";
-        if (!Pattern.matches(reg, rootPathFile.getCanonicalPath())) {
-            throw new RuntimeException("根目录规范化路径应满足正则，'" + reg + "'");
-        }
-        listAndValidate(rootPathFile, new AtomicInteger(0));
+    public static void validate(String rootPath) throws Exception {
+        System.out.println("==========================验证开始==========================");
+        List<String> ignoreUnderRootList = genIgnorePathList(rootPath);
+        //
+        String rootFileCanonicalPath = DirectoryValidator.validateRootPath(rootPath);
+        //
+        listAndValidate(ignoreUnderRootList, rootFileCanonicalPath, new File(rootFileCanonicalPath), new AtomicInteger(0));
+        System.out.println("==========================验证结束==========================");
 
     }
 
     // Thumbs.db
-    private void listAndValidate(File source, AtomicInteger level) throws Exception {
+    private static void listAndValidate(List<String> ignoreUnderRootList, String rootFileCanonicalPath, File source, AtomicInteger level) throws Exception {
         if (null == source) {
             throw new RuntimeException("目录不能为空, " + source);
         }
@@ -70,13 +63,7 @@ public class DirectoryValidatorTest {
         for (File file : subFiles) {
             String fileName = file.getName();
             if (level.get() == 1) {
-                List<String> ignoreUnderRootList = new ArrayList<String>() {{
-                    add("$RECYCLE.BIN");
-                    add("System Volume Information");
-                    add("Recovery");
-                    add(".hardlink.bak");
-                }};
-                if (ignoreUnderRootList.contains(fileName)) {
+                if (ignoreUnderRootList.contains(rootFileCanonicalPath + fileName)) {
                     continue;
                 }
             }
@@ -180,7 +167,7 @@ public class DirectoryValidatorTest {
                 }
 
             }
-            listAndValidate(file, level);
+            listAndValidate(ignoreUnderRootList, rootFileCanonicalPath, file, level);
         }
         if (level.get() == 3) {
             if (torrentCountLevel3 == 0) {
@@ -195,7 +182,7 @@ public class DirectoryValidatorTest {
     }
 
 
-    private Map<String, File> transferIdFileMap(Collection<File> fileCollection) throws Exception {
+    private static Map<String, File> transferIdFileMap(Collection<File> fileCollection) throws Exception {
         Iterator<File> iterator = fileCollection.iterator();
         Map<String, File> result = new HashMap<String, File>();
         while (iterator.hasNext()) {
@@ -203,6 +190,56 @@ public class DirectoryValidatorTest {
             result.put(file.getCanonicalPath(), file);
         }
         return result;
+    }
+
+
+    /**
+     * 获得根路径的规范化表示
+     *
+     * @param rootPath
+     * @return
+     * @throws Exception
+     */
+    public static String validateRootPath(String rootPath) throws Exception {
+        if (null == rootPath || rootPath.trim().length() == 0) {
+            throw new RuntimeException("rootPath不能为空");
+        }
+        File rootFile = new File(rootPath.toUpperCase());
+        // 只允许windows
+        String os = System.getProperty("os.name", null);
+        if (null == os) {
+            throw new RuntimeException("无法获取系统属性，'os.name'");
+        }
+        if (os.toLowerCase().indexOf("windows") == -1) {
+            throw new RuntimeException("只支持windows操作系统");
+        }
+        // 必须为根目录
+        if (!rootFile.exists()) {
+            throw new RuntimeException("目录不存在，" + rootPath);
+        }
+        if (rootFile.getParentFile() != null) {
+            throw new RuntimeException("该目录不是根目录，" + rootPath);
+        }
+        // 验证根目录规范化路径是否正确
+        String rootFileCanonicalPath = rootFile.getCanonicalPath();
+        String reg = "[A-Z]:\\\\";
+        if (!Pattern.matches(reg, rootFileCanonicalPath)) {
+            throw new RuntimeException("根目录规范化路径应满足正则，'" + reg + "'");
+        }
+        return rootFileCanonicalPath;
+    }
+
+
+    public static List<String> genIgnorePathList(String rootPath) throws Exception {
+        final String rootFileCanonicalPath = validateRootPath(rootPath);
+        List<String> ignoreUnderRootList = new ArrayList<String>() {{
+            add(rootFileCanonicalPath + "$RECYCLE.BIN");
+            add(rootFileCanonicalPath + "System Volume Information");
+            add(rootFileCanonicalPath + "Recovery");
+            add(rootFileCanonicalPath + ".hardlink.uTorrent");
+            add(rootFileCanonicalPath + ".hardlink.bak");
+        }};
+        return ignoreUnderRootList;
     }
 
 
