@@ -71,8 +71,7 @@ public class DirectoryValidator {
                 if (!file.isDirectory()) {
                     throw new RuntimeException(infoPrefix + "必须为目录, " + fileName);
                 }
-                // "^.+?[(].+?[^\\s][／][a-zA-Z0-9 ;!&\\-.%]+[)]$"
-                if (!Pattern.matches("^.+?[(].+?[^\\s][／].+?[)]$", fileName)) {
+                if (!Pattern.matches("^.*?[^\\s][(][^\\s].*?[^\\s][／][^\\s].*?[^\\s][)]$", fileName)) {
                     throw new RuntimeException(infoPrefix + "文件夹名称格式错误, " + fileName);
                 }
             } else if (level.get() == 2) {
