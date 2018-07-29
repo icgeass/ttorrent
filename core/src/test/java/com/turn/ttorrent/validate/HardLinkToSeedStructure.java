@@ -15,34 +15,46 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class HardLinkToSeedStructure {
 
 
-    private final static String hardlinkToFolder = ".hardlink.uTorrent";
+    public final static String HARD_LINK_TO_SEED_STRUCTURE_FOLDER = ".hardlink.uTorrent";
 
-    private final static ThreadLocal<Long> sizeOfAll = new ThreadLocal<Long>();
+    private final static ThreadLocal<Long> SIZE_OF_PROC_ALL = new ThreadLocal<Long>();
 
-    private final static ThreadLocal<Long> numOfAll = new ThreadLocal<Long>();
+    private final static ThreadLocal<Long> NUM_OF_PROC_ALL = new ThreadLocal<Long>();
 
 
-    public static void createHardLink(String rootPath) throws Exception {
+    public static String[] createHardLink(String rootPath) throws Exception {
         System.out.println("==========================生成Seed目录开始==========================");
-        sizeOfAll.set(0L);
-        numOfAll.set(0L);
+
+        SIZE_OF_PROC_ALL.set(0L);
+        NUM_OF_PROC_ALL.set(0L);
 
         String rootFileCanonicalPath = DirectoryValidator.validateRootPath(rootPath);
 
-        File seedFolderCanonicalPath = new File(rootFileCanonicalPath + hardlinkToFolder);
+        File seedFolderCanonicalPath = new File(rootFileCanonicalPath + HARD_LINK_TO_SEED_STRUCTURE_FOLDER);
         if (!seedFolderCanonicalPath.exists()) {
             seedFolderCanonicalPath.mkdir();
         }
         Runtime.getRuntime().exec("attrib +R +S +H \"" + seedFolderCanonicalPath.getCanonicalPath() + "\"");
 
-        list(rootFileCanonicalPath, new File(rootPath), new AtomicInteger(0), 2);
-        System.out.println("文件总计：" + numOfAll.get() + "，文件大小：" + sizeOfAll.get());
+        list(rootFileCanonicalPath, new File(rootFileCanonicalPath), new AtomicInteger(0), 2);
+
+        //
+        long sizeOfBakFolder = FileUtils.sizeOfDirectory(seedFolderCanonicalPath);
+        int numOfBakFolder = FileUtils.listFiles(seedFolderCanonicalPath, null, true).size();
+        if (sizeOfBakFolder != SIZE_OF_PROC_ALL.get()) {
+            throw new RuntimeException("备份文件夹大小与备份处理文件大小不一致，sizeOfBakFolder=" + sizeOfBakFolder + "，procSize=" + SIZE_OF_PROC_ALL.get());
+        }
+        if (numOfBakFolder != NUM_OF_PROC_ALL.get()) {
+            throw new RuntimeException("备份文件夹文件数量与备份处理文件数量不一致，numOfBakFolder=" + numOfBakFolder + "，procFileNum=" + NUM_OF_PROC_ALL.get());
+        }
+        System.out.println("文件总计：" + NUM_OF_PROC_ALL.get() + "，文件大小：" + SIZE_OF_PROC_ALL.get());
         System.out.println("==========================生成Seed目录结束==========================");
+        return new String[]{NUM_OF_PROC_ALL.get() + "", SIZE_OF_PROC_ALL.get() + ""};
 
     }
 
     /**
-     * 将该levelTo的目录保持文件夹结构硬链接到指定目录（hardlinkToFolder）
+     * 将该levelTo的目录保持文件夹结构硬链接到指定目录（HARD_LINK_TO_SEED_STRUCTURE_FOLDER）
      * 0（含）-levelTo（含）必须全是目录
      *
      * @param rootFileCanonicalPath
@@ -73,10 +85,10 @@ public class HardLinkToSeedStructure {
                 Iterator<File> iterator = toHardLinkFiles.iterator();
                 while (iterator.hasNext()) {
                     File toHardLinkFile = iterator.next();
-                    String targetLinkPath = rootFileCanonicalPath + hardlinkToFolder + File.separator + toHardLinkFile.getCanonicalPath().replace(file.getParentFile().getCanonicalPath() + File.separator, "");
+                    String targetLinkPath = rootFileCanonicalPath + HARD_LINK_TO_SEED_STRUCTURE_FOLDER + File.separator + toHardLinkFile.getCanonicalPath().replace(file.getParentFile().getCanonicalPath() + File.separator, "");
                     File targetLinkFile = new File(targetLinkPath);
-                    sizeOfAll.set(sizeOfAll.get() + toHardLinkFile.length());
-                    numOfAll.set(numOfAll.get() + 1);
+                    SIZE_OF_PROC_ALL.set(SIZE_OF_PROC_ALL.get() + toHardLinkFile.length());
+                    NUM_OF_PROC_ALL.set(NUM_OF_PROC_ALL.get() + 1);
                     if (!targetLinkFile.exists()) {
                         FileUtils.forceMkdirParent(targetLinkFile);
                         Files.createLink(targetLinkFile.toPath(), toHardLinkFile.toPath());

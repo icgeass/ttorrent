@@ -29,14 +29,29 @@ public class DirectoryValidator {
         add("[Claymore][16][BDRIP][1080P][H264(vfr+ED60fps)_FLAC][REV].mkv");
     }};
 
-    public static void validate(String rootPath) throws Exception {
+    public static String[] validate(String rootPath) throws Exception {
         System.out.println("==========================验证开始==========================");
         List<String> ignoreUnderRootList = genIgnorePathList(rootPath);
         //
         String rootFileCanonicalPath = DirectoryValidator.validateRootPath(rootPath);
+        File rootFile = new File(rootFileCanonicalPath);
         //
-        listAndValidate(ignoreUnderRootList, rootFileCanonicalPath, new File(rootFileCanonicalPath), new AtomicInteger(0));
+        listAndValidate(ignoreUnderRootList, rootFileCanonicalPath, rootFile, new AtomicInteger(0));
+        //
+
+        File[] files = rootFile.listFiles();
+        long sizeOfAll = 0L;
+        int numOfAll = 0;
+        for (File file : files) {
+            if (ignoreUnderRootList.contains(file.getCanonicalPath())) {
+                continue;
+            }
+            sizeOfAll += FileUtils.sizeOfDirectory(file);
+            numOfAll += FileUtils.listFiles(file, null, true).size();
+        }
+        System.out.println("文件总计：" + numOfAll + "，文件大小：" + sizeOfAll);
         System.out.println("==========================验证结束==========================");
+        return new String[]{numOfAll + "", sizeOfAll + ""};
 
     }
 
@@ -66,8 +81,6 @@ public class DirectoryValidator {
                 if (ignoreUnderRootList.contains(rootFileCanonicalPath + fileName)) {
                     continue;
                 }
-            }
-            if (level.get() == 1) {
                 if (!file.isDirectory()) {
                     throw new RuntimeException(infoPrefix + "必须为目录, " + fileName);
                 }
@@ -235,8 +248,8 @@ public class DirectoryValidator {
             add(rootFileCanonicalPath + "$RECYCLE.BIN");
             add(rootFileCanonicalPath + "System Volume Information");
             add(rootFileCanonicalPath + "Recovery");
-            add(rootFileCanonicalPath + ".hardlink.uTorrent");
-            add(rootFileCanonicalPath + ".hardlink.bak");
+            add(rootFileCanonicalPath + HardLinkToSeedStructure.HARD_LINK_TO_SEED_STRUCTURE_FOLDER);
+            add(rootFileCanonicalPath + HardlinkToBakDirectory.HARD_LINK_TO_BAK_FOLDER);
         }};
         return ignoreUnderRootList;
     }

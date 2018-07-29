@@ -14,7 +14,7 @@ import java.util.List;
 public class HardlinkToBakDirectory {
 
 
-    private final static String hardlinkToFolder = ".hardlink.bak";
+    public final static String HARD_LINK_TO_BAK_FOLDER = ".hardlink.bak";
 
 
     /**
@@ -23,12 +23,12 @@ public class HardlinkToBakDirectory {
      *
      * @throws Exception
      */
-    public static void hardlinkBak(String rootPath) throws Exception {
+    public static String[] hardlinkBak(String rootPath) throws Exception {
         System.out.println("==========================备份开始==========================");
         String rootFileCanonicalPath = DirectoryValidator.validateRootPath(rootPath);
         File rootFile = new File(rootFileCanonicalPath);
         // 备份文件夹创建，加入只读，系统，隐藏属性
-        File bakFolder = new File(rootFileCanonicalPath + hardlinkToFolder);
+        File bakFolder = new File(rootFileCanonicalPath + HARD_LINK_TO_BAK_FOLDER);
         if (!bakFolder.exists()) {
             bakFolder.mkdir();
         }
@@ -40,8 +40,8 @@ public class HardlinkToBakDirectory {
         // 遍历目标文件夹
         Collection<File> files = FileUtils.listFiles(rootFile, null, true);
         Iterator<File> iterator = files.iterator();
-        Long srcSize = 0L;
-        Integer srcFileNum = 0;
+        Long procSize = 0L;
+        Integer procFileNum = 0;
         lab:
         while (iterator.hasNext()) {
             File file = iterator.next();
@@ -51,8 +51,8 @@ public class HardlinkToBakDirectory {
                     continue lab;
                 }
             }
-            srcFileNum++;
-            srcSize += file.length();
+            procFileNum++;
+            procSize += file.length();
             String targetLinkPath = bakFolderCanonicalPath + File.separator + fileCanonicalPath.replace(rootFileCanonicalPath, "");
             File targetLinkFile = new File(targetLinkPath);
             if (!targetLinkFile.exists()) {
@@ -60,16 +60,18 @@ public class HardlinkToBakDirectory {
                 Files.createLink(targetLinkFile.toPath(), file.toPath());
             }
         }
+        //
         long sizeOfBakFolder = FileUtils.sizeOfDirectory(bakFolder);
         int numOfBakFolder = FileUtils.listFiles(bakFolder, null, true).size();
-        if (sizeOfBakFolder != srcSize) {
-            throw new RuntimeException("备份文件夹与源文件夹大小不一致，sizeOfBakFolder=" + sizeOfBakFolder + "，srcSize=" + srcSize);
+        if (sizeOfBakFolder != procSize) {
+            throw new RuntimeException("备份文件夹大小与备份处理文件大小不一致，sizeOfBakFolder=" + sizeOfBakFolder + "，procSize=" + procSize);
         }
-        if (numOfBakFolder != srcFileNum) {
-            throw new RuntimeException("备份文件夹与源文件夹文件数量不一致，numOfBakFolder=" + numOfBakFolder + "，srcFileNum=" + srcFileNum);
+        if (numOfBakFolder != procFileNum) {
+            throw new RuntimeException("备份文件夹文件数量与备份处理文件数量不一致，numOfBakFolder=" + numOfBakFolder + "，procFileNum=" + procFileNum);
         }
-        System.out.println("文件总计：" + srcFileNum + "，文件大小：" + srcSize);
+        System.out.println("文件总计：" + procFileNum + "，文件大小：" + procSize);
         System.out.println("==========================备份结束==========================");
+        return new String[]{procFileNum + "", procSize + ""};
     }
 
 
