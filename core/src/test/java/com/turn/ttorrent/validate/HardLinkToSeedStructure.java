@@ -47,6 +47,8 @@ public class HardLinkToSeedStructure {
         if (numOfBakFolder != NUM_OF_PROC_ALL.get()) {
             throw new RuntimeException("备份文件夹文件数量与备份处理文件数量不一致，numOfBakFolder=" + numOfBakFolder + "，procFileNum=" + NUM_OF_PROC_ALL.get());
         }
+        // 如果有空目录则异常
+        HardlinkToBakDirectory.checkIfContainsEmptyFolder(seedFolderCanonicalPath);
         System.out.println("文件总计：" + NUM_OF_PROC_ALL.get() + "，文件大小：" + SIZE_OF_PROC_ALL.get());
         System.out.println("==========================生成Seed目录结束==========================");
         return new String[]{NUM_OF_PROC_ALL.get() + "", SIZE_OF_PROC_ALL.get() + ""};

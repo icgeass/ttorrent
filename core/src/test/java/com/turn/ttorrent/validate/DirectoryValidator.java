@@ -65,6 +65,9 @@ public class DirectoryValidator {
             if (level.get() == 0) {
                 throw new RuntimeException(infoPrefix + "根必须为目录, " + source.getName());
             }
+            if (source.length() == 0) {
+                throw new RuntimeException(infoPrefix + "文件长度为0, " + source.getCanonicalPath());
+            }
             return;
         }
 

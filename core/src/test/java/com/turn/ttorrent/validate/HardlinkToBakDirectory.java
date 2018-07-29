@@ -3,6 +3,7 @@ package com.turn.ttorrent.validate;
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Collection;
 import java.util.Iterator;
@@ -69,9 +70,32 @@ public class HardlinkToBakDirectory {
         if (numOfBakFolder != procFileNum) {
             throw new RuntimeException("备份文件夹文件数量与备份处理文件数量不一致，numOfBakFolder=" + numOfBakFolder + "，procFileNum=" + procFileNum);
         }
+        // 如果有空目录则异常
+        checkIfContainsEmptyFolder(bakFolder);
+
         System.out.println("文件总计：" + procFileNum + "，文件大小：" + procSize);
         System.out.println("==========================备份结束==========================");
         return new String[]{procFileNum + "", procSize + ""};
+    }
+
+    public static void checkIfContainsEmptyFolder(File file) throws IOException {
+        if (null == file) {
+            throw new RuntimeException("file can not be null");
+        }
+        if (file.isDirectory()) {
+            File[] files = file.listFiles();
+            if (files.length == 0) {
+                throw new RuntimeException("空文件夹, " + file.getCanonicalPath());
+            }
+            for (File f : files) {
+                checkIfContainsEmptyFolder(f);
+            }
+        } else {
+            if (file.length() == 0) {
+                throw new RuntimeException("文件长度为0, " + file.getCanonicalPath());
+            }
+        }
+
     }
 
 
