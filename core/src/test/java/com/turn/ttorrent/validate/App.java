@@ -8,6 +8,14 @@ public class App {
 
     private final static String rootPath = "P:";
 
+    static{
+        try {
+            HardlinkToBakDirectory.hardlinkBak("E:");
+        }catch (Exception e){
+            throw new RuntimeException(e);
+        }
+    }
+
     public static void main(String[] args) throws Exception {
         String[] numAndSizeInfo0 = DirectoryValidator.validate(rootPath);
         String[] numAndSizeInfo1 = HardlinkToBakDirectory.hardlinkBak(rootPath);
@@ -19,4 +27,5 @@ public class App {
             throw new RuntimeException("备份文件夹与原始文件夹文件数量大小不一致, " + HardLinkToSeedStructure.HARD_LINK_TO_SEED_STRUCTURE_FOLDER);
         }
     }
+
 }
