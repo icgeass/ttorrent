@@ -161,8 +161,8 @@ public class DirectoryValidator {
                         if (diskEntry.getKey().endsWith(".torrent")) {
                             continue;
                         }
-                        if (!diskEntry.getKey().matches("^.+?\\.(ass|ssa|idx|sub)$")) {
-                            throw new RuntimeException(String.format("除种子文件中指明的文件外必须以ass,ssa,idx,sub其中之一结尾, 文件路径%s", diskEntry.getKey()));
+                        if (!diskEntry.getKey().matches("^.+?\\.(ass|ssa|idx|sub|srt)$")) {
+                            throw new RuntimeException(String.format("除种子文件中指明的文件外必须以ass,ssa,idx,sub,srt其中之一结尾, 文件路径%s", diskEntry.getKey()));
                         }
                         for (Map.Entry<String, File> torrentEntry : torrentFileMap.entrySet()) {
                             if (!torrentEntry.getKey().matches("^.+?\\.(mkv|mp4|avi|wmv|MKV|MP4|AVI|WAV)$")) {
@@ -253,6 +253,9 @@ public class DirectoryValidator {
             add(rootFileCanonicalPath + "Recovery");
             add(rootFileCanonicalPath + HardLinkToSeedStructure.HARD_LINK_TO_SEED_STRUCTURE_FOLDER);
             add(rootFileCanonicalPath + HardlinkToBakDirectory.HARD_LINK_TO_BAK_FOLDER);
+            add(rootFileCanonicalPath + "BaiduDownload");
+            add(rootFileCanonicalPath + "BaiduDownload.bak");
+
         }};
         return ignoreUnderRootList;
     }

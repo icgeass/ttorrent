@@ -8,14 +8,6 @@ public class App {
 
     private final static String rootPath = "P:";
 
-    static{
-        try {
-            HardlinkToBakDirectory.hardlinkBak("E:");
-        }catch (Exception e){
-            throw new RuntimeException(e);
-        }
-    }
-
     public static void main(String[] args) throws Exception {
         String[] numAndSizeInfo0 = DirectoryValidator.validate(rootPath);
         String[] numAndSizeInfo1 = HardlinkToBakDirectory.hardlinkBak(rootPath);
